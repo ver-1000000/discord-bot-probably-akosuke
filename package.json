@@ -2,11 +2,11 @@
   "name": "discord-bot-probably-akosuke",
   "version": "1.0.0",
   "description": "Discord bot for 相談所 by AKAI",
-  "main": "dist/app.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "start": "npm run build && npm run serve",
     "build": "npx tsc",
-    "serve": "node dist",
+    "serve": "NODE_PATH=dist node dist/src --trace-warnings",
     "heroku-postbuild": "npx tsc"
   },
   "repository": {

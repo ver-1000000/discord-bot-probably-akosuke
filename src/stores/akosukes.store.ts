@@ -1,8 +1,7 @@
-require('dotenv').config();
-
 import Redis from 'ioredis';
 
-const REDIS_URL = process.env.REDIS_URL || '';
+import { REDIS_URL } from 'src/environment';
+import { PrettyText } from 'src/lib/pretty-text';
 
 /** ストアにアクセスした結果を使いやすくするためにラップする型。 */
 interface StoreResult<T = string | Record<string, string>> {
@@ -57,9 +56,8 @@ export class AkosukesStore {
 
   /** 設定されている値をすべて取得する。 */
   async data(): Promise<Omit<StoreResult<Record<string, string>>, 'key'>> {
-    const value    = this.cache == null ? await this.fetchData() : this.cache; 
-    const prettyFn = ([key, value]: [string, string]) => ` **\`${key}\`** \`/${value}/\``;
-    const pretty   = Object.entries<string>(value).map(prettyFn).join('\n') || `あこすけがひとつも設定されていません:cry:`;;
+    const value  = this.cache == null ? await this.fetchData() : this.cache; 
+    const pretty = PrettyText.markdownList('', ...Object.entries<string>(value));
     return { pretty, value };
   }
 }

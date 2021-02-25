@@ -1,13 +1,8 @@
-require('dotenv').config();
-
+import { Client, Message } from 'discord.js';
 import Redis from 'ioredis';
 
-import { Client, Message } from 'discord.js';
-import { AkosukesStore } from './akosukes.store';
-
-const REDIS_URL             = process.env.REDIS_URL || '';
-const DISCORD_GUILD_ID      = process.env.DISCORD_GUILD_ID || '';
-const PROBABLY_AKOSUKE_RATE = Number(process.env.PROBABLY_AKOSUKE_RATE || 0.1);
+import { REDIS_URL, DISCORD_GUILD_ID, PROBABLY_AKOSUKE_RATE } from 'src/environment';
+import { AkosukesStore } from 'src/stores/akosukes.store';
 
 /** ストアにアクセスした結果を使いやすくするためにラップする型。 */
 interface StoreResult<T = number | Record<string, string>> {
@@ -23,8 +18,7 @@ interface StoreResult<T = number | Record<string, string>> {
 export class ScoresStore {
   private redis = new Redis(REDIS_URL || '', { db: 1 });
 
-  constructor(private akosukesStore: AkosukesStore, private client: Client) {
-  }
+  constructor(private client: Client, private akosukesStore: AkosukesStore) {}
 
   /** idで指定されたmemberのAPを加算し、その合計値を返却する。 メンバーが存在しないときはnullを返す。 */
   private async calcAdd(id: string | undefined, score: number) {
@@ -42,7 +36,7 @@ export class ScoresStore {
     const sortedScores = keyValues.sort(([_a, aValue], [_b, bValue]) => Number(bValue) - Number(aValue));
     const value        = Object.fromEntries(sortedScores);
     const pretty       = (await Promise.all(sortedScores.map(async ([key, value], i) => {
-      const name = (await (await this.client.guilds.fetch(DISCORD_GUILD_ID)).members.fetch(key)).displayName;
+      const name = (await (await this.client.guilds.fetch(DISCORD_GUILD_ID || '')).members.fetch(key)).displayName;
       return `${i === 0 ? ':crown: ' : ''}${name}: _**${value}** AP_`;
     }))).join('\n') || ':warning: AP保持者がいません。';;
     return { pretty, value }
@@ -56,7 +50,7 @@ export class ScoresStore {
     const mentioned = !!this.client.user && mentions.has((this.client.user));
     const getAkosuke = async () => {
       // メンションではないときは`PROBABLY_AKOSUKE_RATE`の確率で成功させ、それ以外は失敗させる
-      if (!mentioned && Math.random() > PROBABLY_AKOSUKE_RATE) { return null; }
+      if (!mentioned && Math.random() > (Number(PROBABLY_AKOSUKE_RATE) || 0.1)) { return null; }
       const reduceFn = (urls: string[], [url, regexpStr]: [string, string]) => new RegExp(regexpStr).test(content) ? urls.concat(url) : urls;
       const urls     = Object.entries((await this.akosukesStore.data()).value).reduce<string[]>(reduceFn, []);
       const url      = urls[new Date().getMilliseconds() % urls.length] || '';

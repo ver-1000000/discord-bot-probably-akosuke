@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/src",
     "target": "es2019",
     "module": "commonjs",
-    "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
