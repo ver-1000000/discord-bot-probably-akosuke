@@ -47,10 +47,12 @@ export class ScoresStore {
    * 次の条件を判断して、たぶんスコアを加算する。
    */
   async calcAddProbably({ content, member, mentions }: Pick<Message, 'content' | 'member' | 'mentions'>): Promise<StoreResult<number>> {
-    const mentioned = !!this.client.user && mentions.has((this.client.user));
-    const getAkosuke = async () => {
-      // メンションではないときは`PROBABLY_AKOSUKE_RATE`の確率で成功させ、それ以外は失敗させる
-      if (!mentioned && Math.random() > (Number(PROBABLY_AKOSUKE_RATE) || 0.1)) { return null; }
+    const mentioned    = !!this.client.user && mentions.has((this.client.user));
+    const hasUrl       = content.includes('http');
+    const failedRandom = Math.random() > (Number(PROBABLY_AKOSUKE_RATE) || 0.1);
+    const getAkosuke   = async () => {
+      // 非メンションで、なおかつhasUrl:trueかfailedRandom:trueのときは失敗させる
+      if (!mentioned && (hasUrl || failedRandom)) { return null; }
       const reduceFn = (urls: string[], [url, regexpStr]: [string, string]) => new RegExp(regexpStr).test(content) ? urls.concat(url) : urls;
       const urls     = Object.entries((await this.akosukesStore.data()).value).reduce<string[]>(reduceFn, []);
       const url      = urls[new Date().getMilliseconds() % urls.length] || '';
