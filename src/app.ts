@@ -2,9 +2,9 @@ import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { Client, ClientUser } from 'discord.js';
 
 import { DISCORD_TOKEN } from 'src/environment';
-import { AkosukesStore } from 'src/stores/akosukes.store';
+import { EntitiesStore } from 'src/stores/entities.store';
 
-import { AkosukesService } from 'src/services/akosukes.service';
+import { EntitiesService } from 'src/services/entities.service';
 import { ScoresStore } from './stores/scores.store';
 
 /** 起点となるメインのアプリケーションクラス。 */
@@ -51,9 +51,9 @@ class App {
 
 /** 依存を解決しつつアプリケーションを起動する。 */
 (() => {
-  const client        = new Client();
-  const akosukesStore = new AkosukesStore();
-  const scoresStore   = new ScoresStore(client, akosukesStore);
-  new AkosukesService(client, akosukesStore, scoresStore).run();
+  const client      = new Client();
+  const entityStore = new EntitiesStore();
+  const scoresStore = new ScoresStore(client, entityStore);
+  new EntitiesService(client, entityStore, scoresStore).run();
   new App(client).run();
 })();

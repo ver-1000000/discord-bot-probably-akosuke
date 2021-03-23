@@ -1,7 +1,7 @@
 import { Client, Message } from 'discord.js';
 
 import { PrettyText } from 'src/lib/pretty-text';
-import { AkosukesStore } from 'src/stores/akosukes.store';
+import { EntitiesStore } from 'src/stores/entities.store';
 import { ScoresStore } from 'src/stores/scores.store';
 
 /** `GenerateText.help`に食わせるヘルプ文の定数。 */
@@ -15,9 +15,9 @@ const HELP = {
   ]
 } as const;
 
-/** `AkosukesStore`の値を操作するサービスクラス。 */
-export class AkosukesService {
-  constructor(private client: Client, private akosukesStore: AkosukesStore, private scoresStore: ScoresStore) {}
+/** `EntitiesStore`の値を操作するサービスクラス。 */
+export class EntitiesService {
+  constructor(private client: Client, private entitiesStore: EntitiesStore, private scoresStore: ScoresStore) {}
 
   /** Clientからのイベント監視を開始する。 */
   run() {
@@ -34,19 +34,19 @@ export class AkosukesService {
     if (content.startsWith('!akosuke.remove')) { this.remove(message, { body }); };
     if (content.startsWith('!akosuke.ranking')) { this.ranking(message); };
     if (content.startsWith('!akosuke.help') || content === '!akosuke') { this.help(message); };
-    if (!content.startsWith('!akosuke')) { this.sendProbablyAkosuke(message); }
+    if (!content.startsWith('!akosuke')) { this.sendProbablyEntity(message); }
   }
 
   /** `!akosuke.set` コマンドを受け取った時、第一引数をキーに、第二引数を値にしたものを登録する。 */
   private async set({ channel }: Message, { body }: { body: string }) {
     const key   = body.replace(/\s.*/g, '');
     const value = body.replace(key, '').trim().replace(/^\/|\/$/g, '');
-    channel.send(await this.akosukesStore.set(key, value).then(({ pretty }) => pretty));
+    channel.send(await this.entitiesStore.set(key, value).then(({ pretty }) => pretty));
   }
 
   /** `!akosuke.remove` コマンドを受け取った時、第一引数にマッチする値を削除する。 */
   private async remove({ channel }: Message, { body: url }: { body: string }) {
-    channel.send(await this.akosukesStore.del(url).then(({ pretty }) => pretty));
+    channel.send(await this.entitiesStore.del(url).then(({ pretty }) => pretty));
   }
 
   /** `!akosuke.list` コマンドを受け取った時、値を一覧する。 */
@@ -60,8 +60,8 @@ export class AkosukesService {
     channel.send(text);
   }
 
-  /** どのAkosukeかを検知して、成功した場合は言霊を授ける。 */
-  async sendProbablyAkosuke({ channel, member, mentions, content }: Message) {
+  /** どのEntityかを検知して、成功した場合は言霊を授ける。 */
+  async sendProbablyEntity({ channel, member, mentions, content }: Message) {
     const storeResult = await this.scoresStore.calcAddProbably({ member, mentions, content });
     if (storeResult.pretty) { channel.send(storeResult.pretty); }
   }
